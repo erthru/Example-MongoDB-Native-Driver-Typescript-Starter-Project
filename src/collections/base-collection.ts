@@ -19,6 +19,15 @@ export enum BaseDocument {
     updatedOn = "updatedOn",
 }
 
+interface List<T> {
+    rows: Array<T>;
+    total: number;
+}
+
+interface Result<T> {
+    row: T;
+}
+
 export default class BaseCollection<T extends IBase> {
     private name: string = BaseDocument.collectionName;
     private indexes!: Array<IIndex>;
@@ -68,28 +77,62 @@ export default class BaseCollection<T extends IBase> {
         }
     }
 
-    async find(aggregate: Array<any> = []): Promise<Array<T>> {
-        return (await this.collection.aggregate(aggregate).toArray()) as Array<T>;
+    async find(aggregate: Array<any> = [], limit: number = 1, page: number = 1): Promise<List<T>> {
+        aggregate.push({
+            $facet: {
+                rows: [],
+                metadata: [{ $group: { _id: null, count: { $sum: 1 } } }],
+            },
+        });
+
+        if (limit > 0) {
+            aggregate[aggregate.length - 1].$facet.rows.push(
+                {
+                    $skip: limit === 0 ? 0 : (page - 1) * limit,
+                },
+                {
+                    $limit: limit,
+                }
+            );
+        }
+
+        const query: any = (await this.collection.aggregate(aggregate).toArray())[0];
+
+        return {
+            rows: [...(query.rows as Array<T>)],
+            total: query.metadata[0]?.count as number,
+        };
     }
 
-    async findById(_id: ObjectId, aggregate: Array<any> = []): Promise<T> {
+    async findById(_id: ObjectId, aggregate: Array<any> = []): Promise<Result<T>> {
         aggregate.push({ $match: { _id: _id } });
-        return (await this.collection.aggregate(aggregate).toArray())[0] as T;
+
+        return {
+            row: (await this.collection.aggregate(aggregate).toArray())[0] as T,
+        };
     }
 
-    async insert(body: T): Promise<T> {
+    async insert(body: T): Promise<Result<T>> {
         body.createdOn = new Date();
         body.updatedOn = new Date();
-        return (await this.collection.insertOne(body)).ops[0] as T;
+
+        return {
+            row: (await this.collection.insertOne(body)).ops[0] as T,
+        };
     }
 
-    async findByIdAndUpdate(_id: ObjectId, body: T): Promise<T> {
+    async findByIdAndUpdate(_id: ObjectId, body: T): Promise<Result<T>> {
         body.updatedOn = new Date();
-        return (await this.collection.findOneAndUpdate({ _id: _id }, { $set: body }, { returnOriginal: false })).value!! as T;
+
+        return {
+            row: (await this.collection.findOneAndUpdate({ _id: _id }, { $set: body }, { returnOriginal: false })).value!! as T,
+        };
     }
 
-    async findByIdAndDelete(_id: ObjectId): Promise<T> {
-        return (await this.collection.findOneAndDelete({ _id: new ObjectId(_id) })).value!! as T;
+    async findByIdAndDelete(_id: ObjectId): Promise<Result<T>> {
+        return {
+            row: (await this.collection.findOneAndDelete({ _id: new ObjectId(_id) })).value!! as T,
+        };
     }
 
     async updateMany(match: T, body: T): Promise<void> {

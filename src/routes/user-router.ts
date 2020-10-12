@@ -22,7 +22,10 @@ const userCollection = new UserCollection();
 
 router.get("/users", async (req: Request, res: Response) => {
     try {
-        const users = await userCollection.find();
+        const limit = parseInt((req.query.limit as unknown) as string) as number;
+        const page = parseInt((req.query.page as unknown) as string) as number;
+        const users = await userCollection.find([], limit, page);
+
         res.status(200).json(users);
     } catch (e: any) {
         res.status(500).json({ error: e.message });
