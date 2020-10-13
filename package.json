@@ -4,7 +4,10 @@
     "description": "",
     "main": "src/app.ts",
     "scripts": {
-        "start": "nodemon src/app.ts",
+        "start": "pm2 start ts-node -- -P tsconfig.json src/app.ts",
+        "stop": "pm2 stop ts-node",
+        "monitor": "pm2 list",
+        "watch": "nodemon src/app.ts",
         "test": "echo \"Error: no test specified\" && exit 1"
     },
     "author": "erthru",
@@ -22,6 +25,7 @@
         "faker": "^5.1.0",
         "mongodb": "^3.6.2",
         "nodemon": "^2.0.4",
+        "pm2": "^4.5.0",
         "swagger-jsdoc": "^4.2.3",
         "swagger-ui-express": "^4.1.4",
         "ts-node": "^9.0.0",
