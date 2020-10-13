@@ -25,4 +25,5 @@ server.listen(PORT, async () => {
     console.log("⚡️[DATABASE]: CONNECTED");
     console.log("⚡️[SERVER]: RUNNING");
     console.log("⚡️[PORT]: " + PORT);
+    console.log("⚡️[MESSAGE]: エブリシングOK、頑張ってねー、エルトホルくん。ヽ(o＾▽＾o)ノ");
 });
