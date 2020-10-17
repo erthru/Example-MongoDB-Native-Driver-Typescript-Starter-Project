@@ -2,6 +2,7 @@ import { Request, Response, Router } from "express";
 import { ObjectId } from "mongodb";
 import UserCollection from "../collections/user-collection";
 import faker from "faker";
+import { created, error, ok } from "../helpers/json";
 
 const router: Router = Router();
 const userCollection = new UserCollection();
@@ -28,9 +29,9 @@ router.get("/users", async (req: Request, res: Response) => {
         const users = await userCollection.find([], limit, page);
         const usersTotal = await userCollection.count();
 
-        res.status(200).json({ users: users, total: usersTotal });
+        ok(res, { users: users, total: usersTotal });
     } catch (e: any) {
-        res.status(500).json({ error: e.message });
+        error(res, e);
     }
 });
 
@@ -57,9 +58,9 @@ router.get("/users", async (req: Request, res: Response) => {
 router.get("/user/:id", async (req: Request, res: Response) => {
     try {
         const user = await userCollection.findById(new ObjectId(req.params.id));
-        res.status(200).json(user);
+        ok(res, { user: user });
     } catch (e: any) {
-        res.status(500).json({ error: e.message });
+        error(res, e);
     }
 });
 
@@ -74,9 +75,9 @@ router.post("/users", async (req: Request, res: Response) => {
             });
         }
 
-        res.status(201).json({ seeder: "ok" });
+        created(res, { seeder: "completed" });
     } catch (e: any) {
-        res.status(500).json({ error: e.message });
+        error(res, e);
     }
 });
 
@@ -122,9 +123,9 @@ router.post("/user", async (req: Request, res: Response) => {
             address: req.body.address,
         });
 
-        res.status(201).json(user);
+        created(res, { user: user });
     } catch (e: any) {
-        res.status(500).json({ error: e.message });
+        error(res, e);
     }
 });
 
@@ -175,9 +176,9 @@ router.put("/user/:id", async (req: Request, res: Response) => {
             address: req.body.address,
         });
 
-        res.status(200).json(user);
+        ok(res, { user: user });
     } catch (e: any) {
-        res.status(500).json({ error: e.message });
+        error(res, e);
     }
 });
 
@@ -202,9 +203,9 @@ router.put("/user/:id", async (req: Request, res: Response) => {
 router.delete("/user/:id", async (req: Request, res: Response) => {
     try {
         const user = await userCollection.findByIdAndDelete(new ObjectId(req.params.id));
-        res.status(200).json(user);
+        ok(res, { user: user });
     } catch (e: any) {
-        res.status(500).json({ error: e.message });
+        error(res, e);
     }
 });
 
