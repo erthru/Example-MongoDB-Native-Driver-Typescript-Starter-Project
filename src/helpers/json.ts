@@ -22,3 +22,10 @@ export const error = (res: Response, error: any) => {
         message: error.message,
     });
 };
+
+export const unauthorized = (res: Response) => {
+    res.status(401).json({
+        error: 0,
+        message: "unauthorized",
+    });
+};

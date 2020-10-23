@@ -42,6 +42,9 @@ export default class BaseCollection<T extends IBase> {
                 clearInterval(interval);
             }
         }, 250);
+
+        const as: IBase = {}
+        console.log(BaseDocument.createdOn in as)
     }
 
     private async registerIndexes() {
@@ -68,17 +71,7 @@ export default class BaseCollection<T extends IBase> {
         }
     }
 
-    async find(aggregate: Array<any> = [], limit: number = 0, page: number = 1): Promise<Array<T>> {
-        if (limit > 0) {
-            aggregate.push({
-                $skip: limit === 0 ? 0 : (page - 1) * limit,
-            });
-
-            aggregate.push({
-                $limit: limit,
-            });
-        }
-
+    async find(aggregate: Array<any> = []): Promise<Array<T>> {
         return (await this.collection.aggregate(aggregate).toArray()) as Array<T>;
     }
 
@@ -89,8 +82,6 @@ export default class BaseCollection<T extends IBase> {
 
     async insert(body: T): Promise<T> {
         body.createdOn = new Date();
-        body.updatedOn = new Date();
-
         return (await this.collection.insertOne(body)).ops[0] as T;
     }
 
@@ -112,13 +103,7 @@ export default class BaseCollection<T extends IBase> {
     }
 
     async count(aggregate: Array<any> = []): Promise<number> {
-        aggregate.push({
-            $group: {
-                _id: null,
-                count: { $sum: 1 },
-            },
-        });
-
+        aggregate.push({ $group: { _id: null, count: { $sum: 1 } } });
         return (await this.collection.aggregate(aggregate).toArray())[0]?.count;
     }
 }

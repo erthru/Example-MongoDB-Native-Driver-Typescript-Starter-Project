@@ -1,32 +1,23 @@
 import { Request, Response, Router } from "express";
 import { ObjectId } from "mongodb";
-import UserCollection from "../collections/user-collection";
+import UserCollection, { UserDocument } from "../collections/user-collection";
 import faker from "faker";
 import { created, error, ok } from "../helpers/json";
+import { filter, paginate, search, sort } from "../helpers/aggregate";
 
 const router: Router = Router();
 const userCollection = new UserCollection();
 
-/**
- * @swagger
- * /users:
- *  get:
- *      description: Get All Users
- *      tags:
- *          - user
- *      produces:
- *          - application/json
- *      responses:
- *          200:
- *              description: ok
- */
-
 router.get("/users", async (req: Request, res: Response) => {
     try {
-        const limit = parseInt((req.query.limit as unknown) as string) as number;
-        const page = parseInt((req.query.page as unknown) as string) as number;
+        const aggregate: Array<any> = [
+            ...search(req.query, [UserDocument.firstName, UserDocument.lastName, UserDocument.email]),
+            ...filter(req.query),
+            ...sort(req.query),
+            ...paginate(req.query),
+        ];
 
-        const users = await userCollection.find([], limit, page);
+        const users = await userCollection.find(aggregate);
         const usersTotal = await userCollection.count();
 
         ok(res, { users: users, total: usersTotal });
@@ -34,26 +25,6 @@ router.get("/users", async (req: Request, res: Response) => {
         error(res, e);
     }
 });
-
-/**
- * @swagger
- * /user/{id}:
- *  get:
- *      description: Get Single Users
- *      tags:
- *          - user
- *      produces:
- *          - application/json
- *      parameters:
- *          - name: id
- *            description: id of user to get
- *            in: path
- *            required: true
- *            type: string
- *      responses:
- *          200:
- *              description: ok
- */
 
 router.get("/user/:id", async (req: Request, res: Response) => {
     try {
@@ -81,39 +52,6 @@ router.post("/users", async (req: Request, res: Response) => {
     }
 });
 
-/**
- * @swagger
- * /user:
- *  post:
- *      description: Add Single Users
- *      tags:
- *          - user
- *      produces:
- *          - application/json
- *      parameters:
- *          - name: user
- *            in: body
- *            description: user body to add
- *            schema:
- *              type: object
- *              required:
- *                  - firstName
- *                  - email
- *                  - address
- *              properties:
- *                  firstName:
- *                      type: string
- *                  lastName:
- *                      type: string
- *                  email:
- *                      type: string
- *                  address:
- *                      type: string
- *      responses:
- *          201:
- *              description: created
- */
-
 router.post("/user", async (req: Request, res: Response) => {
     try {
         const user = await userCollection.insert({
@@ -129,44 +67,6 @@ router.post("/user", async (req: Request, res: Response) => {
     }
 });
 
-/**
- * @swagger
- * /user/{id}:
- *  put:
- *      description: Update Single Users
- *      tags:
- *          - user
- *      produces:
- *          - application/json
- *      parameters:
- *          - name: id
- *            in: path
- *            description: user id to update
- *          - name: user
- *            in: body
- *            description: user body to add
- *            required: true
- *            type: string
- *            schema:
- *              type: object
- *              required:
- *                  - firstName
- *                  - email
- *                  - address
- *              properties:
- *                  firstName:
- *                      type: string
- *                  lastName:
- *                      type: string
- *                  email:
- *                      type: string
- *                  address:
- *                      type: string
- *      responses:
- *          200:
- *              description: ok
- */
-
 router.put("/user/:id", async (req: Request, res: Response) => {
     try {
         const user = await userCollection.findByIdAndUpdate(new ObjectId(req.params.id), {
@@ -181,24 +81,6 @@ router.put("/user/:id", async (req: Request, res: Response) => {
         error(res, e);
     }
 });
-
-/**
- * @swagger
- * /user/{id}:
- *  delete:
- *      description: Delete Single Users
- *      tags:
- *          - user
- *      produces:
- *          - application/json
- *      parameters:
- *          - name: id
- *            in: path
- *            description: user id to delete
- *      responses:
- *          200:
- *              description: ok
- */
 
 router.delete("/user/:id", async (req: Request, res: Response) => {
     try {
