@@ -42,9 +42,6 @@ export default class BaseCollection<T extends IBase> {
                 clearInterval(interval);
             }
         }, 250);
-
-        const as: IBase = {}
-        console.log(BaseDocument.createdOn in as)
     }
 
     private async registerIndexes() {
